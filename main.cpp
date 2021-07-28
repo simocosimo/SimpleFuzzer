@@ -50,7 +50,7 @@ void bit_flip(std::vector<std::bitset<8>> &data) {
     std::vector<unsigned long> chosen_indexes {};
 
     for(int counter = 0; counter < num_of_flips; ++counter) {
-        chosen_indexes.push_back(random((unsigned long)4, data.size() - 4));
+        chosen_indexes.push_back(random(static_cast<unsigned long>(4), data.size() - 4));
     }
 
     std::cout << "Number of chosen indexes: " << chosen_indexes.size() << std::endl;
@@ -67,6 +67,55 @@ void bit_flip(std::vector<std::bitset<8>> &data) {
         std::cout << "data[" << i << "] changed from " << prev << " to " << data[i] << std::endl;
     }
 
+}
+
+void magic(std::vector<std::bitset<8>> &data) {
+
+    // Four byte magics
+    const std::vector<std::bitset<4*8>> magics {
+        std::bitset<4*8>(0xFF),
+        std::bitset<4*8>(0x7F),
+        std::bitset<4*8>(0x00),
+
+        std::bitset<4*8>(0xFFFF),
+        std::bitset<4*8>(0x0000),
+        
+        std::bitset<4*8>(0xFFFFFFFF),
+        std::bitset<4*8>(0x00000000),
+        std::bitset<4*8>(0x80000000),
+        std::bitset<4*8>(0x40000000),
+        std::bitset<4*8>(0x7FFFFFFF)
+    };
+
+    int picked_magic = random(0, 9);
+    int chosen_index = random(static_cast<unsigned long>(4), data.size() - 4);
+    std::bitset<4*8> bitmask(0xFF);
+    std::cout << "Picked: " << picked_magic << ", " << magics[picked_magic] << std::endl;
+
+    if (picked_magic >= 0 && picked_magic <=2) {
+        // One byte values
+        data[chosen_index] = std::bitset<8>(magics[picked_magic].to_ulong());
+    } else if(picked_magic >= 3 && picked_magic <= 4) {
+        // Two bytes values
+        std::bitset<8> lower((magics[picked_magic] & bitmask).to_ullong());
+        std::bitset<8> higher((magics[picked_magic] >> 8 & bitmask).to_ullong());
+        data[chosen_index] = higher;
+        data[chosen_index + 1] = lower;
+
+        std::cout << lower << " " << higher << std::endl;
+    } else {
+        // Four bytes values
+        std::bitset<8> low_lower((magics[picked_magic] & bitmask).to_ullong());
+        std::bitset<8> lower((magics[picked_magic] >> 8 & bitmask).to_ullong());
+        std::bitset<8> higher((magics[picked_magic] >> 16 & bitmask).to_ullong());
+        std::bitset<8> high_higher((magics[picked_magic] >> 24 & bitmask).to_ullong());
+        data[chosen_index] = high_higher;
+        data[chosen_index + 1] = higher;
+        data[chosen_index + 2] = lower;
+        data[chosen_index + 3] = low_lower;
+
+        std::cout << low_lower << " " << lower << " " << higher << " " << high_higher << std::endl; 
+    }
 }
 
 int main(int argc, char** argv) {
@@ -87,7 +136,8 @@ int main(int argc, char** argv) {
     }
     
     // -- Bit flipping
-    bit_flip(data);
+    // bit_flip(data);
+    magic(data);
 
     if(!create_new(data, output_file)) {
         exit(1);

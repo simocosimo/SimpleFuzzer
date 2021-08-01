@@ -157,13 +157,32 @@ void exif(int counter, const std::vector<std::bitset<8>> data) {
     }
 }
 
+enum FuzzType {
+    NORMAL,
+    BIT_FLIP,
+    MAGIC
+};
+
 int main(int argc, char** argv) {
 
     const std::string output_file = "modded.jpg";
 
+    // TODO: better way to catch parameters
     if(argc < 2) {
         std::cout << "Usage: " << argv[0] << " <valid_jpg>" << std::endl;
         exit(1);
+    }
+
+    FuzzType fuzzMode = FuzzType::NORMAL;
+    if(argc == 3) {
+        std::string command_mode = argv[2];
+        if(command_mode.compare("-bitflip") == 0) {
+            fuzzMode = FuzzType::BIT_FLIP;
+            std::cout << "Fuzzing using just BIT_FLIP mode." << std::endl;
+        } else if(command_mode.compare("-magic") == 0) {
+            fuzzMode = FuzzType::MAGIC;
+            std::cout << "Fuzzing using just MAGIC mode." << std::endl;
+        }
     }
     
     const std::string filename = argv[1];
@@ -177,6 +196,8 @@ int main(int argc, char** argv) {
         }
         
         int fuzz_mode = random(0, 1);
+        if(fuzzMode == FuzzType::BIT_FLIP) fuzz_mode = 1;
+        if(fuzzMode == FuzzType::MAGIC) fuzz_mode = 0;
         if (fuzz_mode) {
             bit_flip(data);
         } else {
